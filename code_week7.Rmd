@@ -1,0 +1,173 @@
+---
+title: '[Week7] Call Center Data Analysis'
+author: "jinyoung, happeanut, suyoung, yunhwan"
+date: "20170809"
+output:
+  html_document: default
+---
+
+## Call data import
+```{r error=FALSE,message=FALSE,warning=FALSE}
+#getwd()
+#setwd("C:/Users/JinYoung/Desktop/IMSC/project1/usc")
+setwd("C:/CallCenter")
+#setwd("C:/usc/Data")
+data<-read.csv("domino6_2.csv", header=TRUE)
+data2<-read.csv("mister2_2.csv", header=TRUE)
+```
+
+## Install Library
+```{r error=FALSE,message=FALSE,warning=FALSE}
+library(randomForest)
+library(caret)
+library(dplyr)
+```
+
+# RANDOM FOREST
+# WHOLE DATA
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Preprocessing
+myData <- subset(data, select = c(year, month, time, wday, holiday, precClass, tempClass))
+myData$year <- as.factor(myData$year)
+myData$month <- as.factor(myData$month)
+myData$time <- as.factor(myData$time)
+myData$holiday <- as.factor(myData$holiday)
+myData$precClass <- as.factor(myData$precClass)
+myData$tempClass <- as.factor(myData$tempClass)
+
+# create totalClass4
+myData$totalClass4 <- ntile(data$total, 4)
+myData$totalClass4 <- as.factor(myData$totalClass4)
+
+# Remove NA
+myData <- myData[complete.cases(myData),]
+
+# Partition data set into training and test
+sample_idx <- createDataPartition(y=myData$totalClass4, p=0.7, list=FALSE)
+trainData <- myData[sample_idx, ]
+testData <- myData[-sample_idx, ]
+
+# Build a randomForest model
+model <- randomForest(totalClass4~., data=trainData, importance=TRUE)
+
+# Predict accuracy
+prediction <- predict(model, testData, type='class')
+confusionMatrix(prediction, testData$totalClass4)
+```
+
+# WITHOUT 10 & 22: PARTITION
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Preprocessing
+myData <- subset(data, select = c(year, month, time, wday, holiday, precClass, tempClass, total))
+myData$year <- as.factor(myData$year)
+myData$month <- as.factor(myData$month)
+myData$time <- as.factor(myData$time)
+myData$holiday <- as.factor(myData$holiday)
+myData$precClass <- as.factor(myData$precClass)
+myData$tempClass <- as.factor(myData$tempClass)
+
+# Remove NA
+myData <- myData[complete.cases(myData),]
+
+# Remove 10, 22
+wo10Data <- subset(myData, time!=10)
+wo10Data <- subset(wo10Data, time!=22)
+
+# create totalClass4
+wo10Data$totalClass4 <- ntile(wo10Data$total, 4)
+wo10Data$totalClass4 <- as.factor(wo10Data$totalClass4)
+str(wo10Data)
+
+# Partition data set into training and test
+sample_idx <- createDataPartition(y=wo10Data$totalClass4, p=0.7, list=FALSE)
+trainData <- wo10Data[sample_idx, ]
+testData <- wo10Data[-sample_idx, ]
+
+# Build a model
+features <- c("year", "month", "time", "wday", "holiday", "precClass", "tempClass", "totalClass4")
+model <- randomForest(totalClass4~., data=trainData[,features], importance=TRUE)
+
+# Predict accuracy
+prediction <- predict(model, testData[,features], type='class')
+confusionMatrix(prediction, testData$totalClass4)
+```
+
+# WEEKDAY VS WEEKEND
+# DATA PROCESSING
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# PREPROCESSING
+myData <- subset(data, select = c(month, time, wday, holiday, precClass, tempClass,year,total))
+myData$month <- as.factor(myData$month)
+myData$time <- as.factor(myData$time)
+myData$wday <- as.factor(myData$wday)
+myData$holiday <- as.factor(myData$holiday)
+myData$precClass <- as.factor(myData$precClass)
+myData$tempClass <- as.factor(myData$tempClass)
+myData$year <- as.factor(myData$year)
+
+# Remove NA
+myData <- myData[complete.cases(myData),]
+
+# Partition into weekend vs weekday
+id_weekend = which(myData$wday=="Sun"|myData$wday=="Sat")
+
+weekend<-myData[id_weekend,]
+weekday<-myData[-id_weekend,]
+
+weekend$weekendClass<-ntile(weekend$total, 4)
+weekday$weekdayClass<-ntile(weekday$total, 4)
+
+weekend$weekendClass<-as.factor(weekend$weekendClass)
+weekday$weekdayClass<-as.factor(weekday$weekdayClass)
+```
+
+# WEEKDAY: PARTITION
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Partition data set into training and test
+sample_idx <- sample(1:nrow(weekday), nrow(weekday)*0.7, replace = F)
+weekdayTrain <- weekday[sample_idx, ]
+weekdayTest <- weekday[-sample_idx, ]
+
+# Build a model
+model<-randomForest(weekdayTrain$weekdayClass~month+time+wday+holiday+precClass+tempClass+year, data=weekdayTrain, importance=TRUE)
+
+# Predict accuracy
+prediction <- predict(model, weekdayTest, type='class')
+confusionMatrix(prediction, weekdayTest$weekdayClass)
+```
+
+# WEEKEND: PARTITION
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Partition data set into training and test
+sample_idx <- sample(1:nrow(weekend), nrow(weekend)*0.7, replace = F)
+weekendTrain <- weekend[sample_idx, ]
+weekendTest <- weekend[-sample_idx, ]
+
+# Build a model
+model<-randomForest(weekendTrain$weekendClass~month+time+wday+holiday+precClass+tempClass+year, data=weekendTrain, importance=TRUE)
+
+# Predict accuracy
+prediction <- predict(model, weekendTest, type='class')
+confusionMatrix(prediction, weekendTest$weekendClass)
+```
+
+# PEAK(12, 18, 19) & NON-PEAK
+# DATA PREPROCESSING
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# PREPROCESSING
+
+```
+
+# PEAK: PARTITION
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Partition data set into training and test
+# Build a model
+# Predict accuracy
+```
+
+# NON-PEAK: PARTITION
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Partition data set into training and test
+# Build a model
+# Predict accuracy
+```
