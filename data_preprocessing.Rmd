@@ -7,12 +7,14 @@ output: html_document
 
 # Call data import
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-setwd("C:/CallCenter")
+#setwd("C:/CallCenter")
 data<-read.csv("domino6_2.csv", header=TRUE)
 data2<-read.csv("mister2_2.csv", header=TRUE)
 ```
 
 # Data preprocessing 
+## precClass
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-
+data$precClass<-ifelse(data$prec==0,'N',ifelse(data$prec<5,'L',ifelse(data$prec<10, 'H','S')))
+data2$precClass<-ifelse(data2$prec==0,'N',ifelse(data2$prec<5,'L',ifelse(data2$prec<10, 'H','S')))
 ```
