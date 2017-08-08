@@ -7,13 +7,14 @@ output:
   html_document: default
 ---
 
-## Call data import
+# Call data import
 ```{r error=FALSE,message=FALSE,warning=FALSE}
+#setwd("C:/CallCenter")
 data<-read.csv("domino6_2.csv", header=TRUE)
 data2<-read.csv("mister2_2.csv", header=TRUE)
 ```
 
-##Install Library
+# Install Library
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 library(rpart.plot)
 library(gplots)
@@ -24,334 +25,472 @@ library(ggplot2)
 library(sqldf)
 require('gridExtra')
 ```  
-
-##(1) x:daily(7days), y:count
+# (1) DAILY(7DAYS)
+## x:daily(7days), y:count
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-#domino
-count=as.numeric(as.factor(data$count))
-c_data <- as.xts(count,order.by=as.Date(data$date))
-c_weekly <- apply.weekly(c_data,mean)
+# Domino
+count = as.numeric(as.factor(data$count))
+c_data <- as.xts(count, order.by=as.Date(data$date))
+c_weekly <- apply.weekly(c_data, mean)
 
-#mister
-count2=as.numeric(as.factor(data2$count))
-c_data2 <- as.xts(count2,order.by=as.Date(data2$date))
+# Mister
+count2 = as.numeric(as.factor(data2$count))
+c_data2 <- as.xts(count2, order.by=as.Date(data2$date))
 c2_weekly <- apply.weekly(c_data2,mean)
 
-#view graph
-par(mfrow=c(1,2))
+# Make a graph
+par(mfrow = c(1, 2))
 plot(c_weekly, main="Domino", xlab="daily(7days)", ylab="count", xlim=c(0,1000))
 plot(c2_weekly, main="Mister",xlab="daily(7days)", ylab="count", xlim=c(0,1000))
 ```
 
-## (2)x:time, y:count, gb:year
-* highest number of calls for dinnertime
-* lowest for opening/closing time
+# (2) TIME
+## DATA PREPROCESSING
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-# domino
+# Domino
 ty_data = data %>%
   group_by(time,year) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-# mister
+# Mister
 ty_data2 = data2 %>%
   group_by(time,year) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+```
 
-#view graph
-p1<-ggplot(ty_data,aes(x=time,y=count,group=year,color=year))+
-  geom_line(aes(color=year))+
-    geom_point() +
+## x:time, y:count, gb:year
+* highest number of calls for dinnertime
+* lowest for opening/closing time
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1 <- ggplot(ty_data,aes(x=time,y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
   scale_color_gradient(low="orange",high="blue") +
   ggtitle("Domino")
 
-p2<-ggplot(ty_data2,aes(x=time,y=count,group=year,color=year))+
-  geom_line(aes(color=year))+
-    geom_point() +
+# Mister
+p2<-ggplot(ty_data2,aes(x=time,y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) +
+  geom_point() +
   scale_color_gradient(low="orange",high="blue") +
   ggtitle("Mister")
 
-grid.arrange(p1,p2,ncol=2)
-
+grid.arrange(p1, p2, nrow=2)
 ```
 
-
-##(3) x: year, y:count (bar graph)
+## x:time, y:duration, gb:year
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-#domino
+## Make a graph
+# Domino
+p1 <- ggplot(ty_data, aes(x=time, y=duration, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  scale_color_gradient(low="orange", high="blue") +
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(ty_data2, aes(x=time, y=duration, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  scale_color_gradient(low="orange", high="blue") +
+  ggtitle("Mister")
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+## x:time, y:total, gb:year
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1 <- ggplot(ty_data, aes(x=time, y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  scale_color_gradient(low="orange", high="blue") +
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(ty_data2, aes(x=time, y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  scale_color_gradient(low="orange", high="blue") +
+  ggtitle("Mister")
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+# (3) YEAR
+## DATA PREPROCESSING
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
 d_data = data %>%
   group_by(year) %>%
   summarize (count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE),
-            dust=mean(as.numeric(as.character(dust)),na.rm=TRUE))
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-#mister
+# Mister
 d_data2 = data2 %>%
   group_by(year) %>%
   summarize (count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE),
-            dust=mean(as.numeric(as.character(dust)),na.rm=TRUE))
-
-
-#view graph
-p1<-ggplot(d_data,aes(x=year,y=count)) + geom_col() + ggtitle("Domino")
-p2<-ggplot(d_data2,aes(x=year,y=count)) + geom_col() + ggtitle("Mister")
-grid.arrange(p1,p2,ncol=2)
-
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 ```
 
-##(4) x:month, y:count, gb:year
+## x:year, y:count (bar graph)
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-#domino
+## Make a graph
+# Domino
+p1<-ggplot(d_data,aes(x=year,y=count)) + geom_col() + ggtitle("Domino")
+
+# Mister
+p2<-ggplot(d_data2,aes(x=year,y=count)) + geom_col() + ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:year, y:duration (bar graph)
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(d_data,aes(x=year,y=duration)) + geom_col() + ggtitle("Domino")
+
+# Mister
+p2<-ggplot(d_data2,aes(x=year,y=duration)) + geom_col() + ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:year, y:total (bar graph)
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(d_data,aes(x=year,y=total)) + geom_col() + ggtitle("Domino")
+
+# Mister
+p2<-ggplot(d_data2,aes(x=year,y=total)) + geom_col() + ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+# (4) MONTH
+## DATA PREPROCESSING
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
 my_data = data %>%
   group_by(month,year) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-#mister
+# Mister
 my_data2 = data2 %>%
   group_by(month,year) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+```
 
-#view graph
-p1<-ggplot(my_data,aes(x=month,y=count,group=year,color=year))+
-  geom_line(aes(color=year))+
+## x:month, y:count, gb:year
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(my_data,aes(x=as.factor(month),y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +labs(x="month")+
+  scale_color_gradient(low="orange",high="blue") +
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(my_data2,aes(x=as.factor(month),y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) + labs(x="month")+
+  geom_point() + 
+  scale_color_gradient(low="orange",high="blue") + 
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,nrow=2)
+```
+
+## x:month, y:duration, gb:year
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(my_data,aes(x=as.factor(month),y=duration,group=year,color=year)) + 
+  geom_line(aes(color=year)) + labs(x="month")+
   geom_point() +
   scale_color_gradient(low="orange",high="blue") +
   ggtitle("Domino")
 
-p2<-ggplot(my_data2,aes(x=month,y=count,group=year,color=year))+
-  geom_line(aes(color=year))+
-  geom_point() +
-  scale_color_gradient(low="orange",high="blue")+
+# Mister
+p2<-ggplot(my_data2,aes(x=as.factor(month),y=duration,group=year,color=year)) + 
+  geom_line(aes(color=year)) + labs(x="month")+
+  geom_point() + 
+  scale_color_gradient(low="orange",high="blue") + 
   ggtitle("Mister")
 
-grid.arrange(p1,p2,ncol=2)
+grid.arrange(p1,p2,nrow=2)
 ```
 
-##(5)-1 x:wday, y:count 
+## x:month, y:total, gb:year
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(my_data,aes(x=as.factor(month), y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) +labs(x="month")+ 
+  geom_point() +
+  scale_color_gradient(low="orange",high="blue") +
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(my_data2,aes(x=as.factor(month), y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) + labs(x="month")+
+  geom_point() + 
+  scale_color_gradient(low="orange",high="blue") + 
+  ggtitle("Mister")
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+# (5) WDAY
+## x:wday, y:count 
 * Sunday > Saturday > Friday
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-# domino
+## Data preprocessing
+# Domino
 w_data = data %>%
   group_by(wday) %>%
   summarize (count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-labels <- c("Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun")
 
-# mister
+# Mister
 w_data2 = data2 %>%
   group_by(wday) %>%
   summarize (count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+
+## Make a graph
 labels <- c("Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun")
 
-
-#view graph
+# Domino
 p1<-ggplot(w_data,aes(x=factor(wday,levels=labels,ordered=TRUE),y=count)) + 
-  geom_col()+
+  geom_col()+labs(x="wday")+
   ggtitle("Domino")
 
+# Mister
 p2<-ggplot(w_data2,aes(x=factor(wday,levels=labels,ordered=TRUE),y=count)) + 
-  geom_col()+
+  geom_col()+labs(x="wday")+
   ggtitle("Mister")
 
-grid.arrange(p1,p2,ncol=2)
+grid.arrange(p1,p2,nrow=2)
+
+# Compare domino and mister
+p3<-ggplot(w_data,aes(x=factor(wday,levels=labels,ordered=TRUE),y=count,group=1)) + geom_line(colour="red")+labs(x="wday")
+p3<-p3+ geom_line(data=w_data2,aes(x=factor(wday,levels=labels,ordered=TRUE),y=count,group=1),colour="blue") 
+print(p3)
 ```
 
-
-
-##(5)-2x:wday, y:count, gb:year
+## x:wday, y:count, gb:year
 * Sunday > Saturday > Friday
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-#domino
+## Data preprocessing
+# Domino
 wy_data = data %>%
   group_by(wday,year) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-labels <- c("Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun")
 
-#mister
+# Mister
 wy_data2 = data2 %>%
   group_by(wday,year) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+
+## Make a graph
 labels <- c("Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun")
 
-#view graph
-p1<-ggplot(wy_data,aes(x=factor(wday, levels=labels ,ordered=TRUE),y=count,group=year,color=year))+
-  geom_line(aes(color=year))+
-    geom_point() +
+# Domino
+p1<-ggplot(wy_data,aes(x=factor(wday, levels=labels ,ordered=TRUE),y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +labs(x="wday")+
   scale_color_gradient(low="orange",high="blue") +
   ggtitle("Domino")
 
-p2<-ggplot(wy_data2,aes(x=factor(wday, levels=labels ,ordered=TRUE),y=count,group=year,color=year))+
-  geom_line(aes(color=year))+
-    geom_point() +
-  scale_color_gradient(low="orange",high="blue") +
+# Mister
+p2<-ggplot(wy_data2,aes(x=factor(wday, levels=labels ,ordered=TRUE),y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +labs(x="wday")+
+  scale_color_gradient(low="orange",high="blue") + 
   ggtitle("Mister")
 
-grid.arrange(p1,p2,ncol=2)
+grid.arrange(p1,p2,nrow=2)
 ```
 
-## (6)-1 x:holiday, y:count
+# (6) HOLIDAY
+## x:holiday, y:count
 * highest on one day holiday
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-# domino
+## Data preprocessing
+# Domino
 h_data = data %>%
   group_by(holiday) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-# mister
+# Mister
 h_data2 = data2 %>%
   group_by(holiday) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-#view graph
+## Make a graph
+# Domino
 p1<-ggplot(h_data, aes(x=holiday,y=count))+geom_col()+ggtitle("Domino")
+
+# Mister
 p2<-ggplot(h_data2, aes(x=holiday,y=count))+geom_col()+ggtitle("Mister")
 
 grid.arrange(p1,p2,ncol=2)
 ```
 
-
-#(6)-2 holiday 3 days+
+## holiday 3 days+
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-
-#domino
+## Data preprocessing
+# Domino
 h_data = data 
 k_data = filter(h_data,holiday2!=0)
 d_data<-group_by(k_data, holiday2) 
 v_data1<-summarize(d_data, count1=mean(as.numeric(as.character(count)),na.rm=TRUE),duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-#mister
+# Mister
 h_data2 = data2
 k_data2 = filter(h_data2,holiday2!=0)
 d_data2<-group_by(k_data2, holiday2) 
 v_data2<-summarize(d_data2, count2=mean(as.numeric(as.character(count)),na.rm=TRUE),duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-#view graph
-ggplot(v_data1, aes(x=holiday2,y=count1))+
+## Make a graph
+# Domino
+p1<-ggplot(v_data1, aes(x=holiday2,y=count1))+
   geom_col()+
   ggtitle("Domino")
-ggplot(v_data2, aes(x=holiday2,y=count2))+
+
+# Mister
+p2<-ggplot(v_data2, aes(x=holiday2,y=count2))+
   geom_col()+
   ggtitle("Mister")
 
 grid.arrange(p1,p2,ncol=2)
 ```
 
-#(8) weekend vs week
+# (8) weekend vs week
 *0:weekday 1:weekend
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-
-#domino
+## Data preprocessing
+# Domino
 h_data1 = data 
 h_data1$weekend<-ifelse(h_data1$wday=="Sat", 1,ifelse(h_data1$wday=="Sun", 1, 0) )
 d_data1<-group_by(h_data1, weekend)
 v_data1<-summarize(d_data1, count1=mean(as.numeric(as.character(count)),na.rm=TRUE))
 
-#mister
+# Mister
 h_data2 = data2 
 h_data2$weekend<-ifelse(h_data2$wday=="Sat", 1,ifelse(h_data2$wday=="Sun", 1, 0) )
 d_data2<-group_by(h_data2, weekend)
 v_data2<-summarize(d_data2, count2=mean(as.numeric(as.character(count)),na.rm=TRUE))
 
-#view graph
-p1<-ggplot(v_data1, aes(x=weekend,y=count1))+geom_col()+ggtitle("Domino")
-p2<-ggplot(v_data2, aes(x=weekend,y=count2))+geom_col()+ggtitle("Mister")
+## Make a graph
+# Domino
+p1<-ggplot(v_data1, aes(x=weekend,y=count1))+geom_col()+ggtitle("Domino")+labs(y="count")
+
+# Mister
+p2<-ggplot(v_data2, aes(x=weekend,y=count2))+geom_col()+ggtitle("Mister")+labs(y="count")
 
 grid.arrange(p1,p2,ncol=2)
 ```
 
-
-## (9) x:precClass, y:count
+# (9) PRECIPITATION
+## x:precClass, y:count
 * highest in rainy days
 * lowest in clear days
-* H:precipitation 5mm ?´?ƒ, L:0~5mm, N:0mm
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-# domino
+## Data preprocessing
+# Domino
 precClass_data = data %>%
   group_by(precClass) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-# mister
+# Mister
 precClass_data2 = data2 %>%
   group_by(precClass) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-#view graph
-p1<-ggplot(precClass_data,aes(x=precClass,y=count),na.rm=TRUE)+
-  geom_col()+
+## Make a graph
+# Domino
+p1<-ggplot(precClass_data,aes(x=precClass,y=count),na.rm=TRUE) + 
+  geom_col() + 
   ggtitle("Domino")
 
-#graph
-p2<-ggplot(precClass_data2,aes(x=precClass,y=count),na.rm=TRUE)+
-  geom_col()+
+# Mister
+p2<-ggplot(precClass_data2,aes(x=precClass,y=count),na.rm=TRUE) + 
+  geom_col() + 
   ggtitle("Mister")
 
 grid.arrange(p1,p2,ncol=2)
-
 ```
 
-##(10) x:tempClass, y:count
-* highest in cold days
-* lowest in warm days
+# (10) TEMPERATURE
+## DATA PREPROCESSING
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-# domino
+# Domino
 tempClass_data = data %>%
   group_by(tempClass) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
 
-# mister
+# Mister
 tempClass_data2 = data2 %>%
   group_by(tempClass) %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+```
 
-#view graph
+## x:tempClass, y:count
+* highest in cold days
+* lowest in warm days
+```{r error=FALSE,message=FALSE,warning=FALSE}
 p1<- ggplot(tempClass_data,aes(x=tempClass,y=count),na.rm=TRUE)+
   geom_col()+
   ggtitle("Domino")
 
-#graph
 p2<- ggplot(tempClass_data2,aes(x=tempClass,y=count),na.rm=TRUE)+
   geom_col()+
   ggtitle("Mister")
 
 grid.arrange(p1,p2,ncol=2)
-
 ```
 
-
-# SPORTS - Sochi 2014 Winter Olympics
-##(12)-1 x:time, y:count, gb:sports
+# (12) SPORTS - Sochi 2014 Winter Olympics
+## x:time, y:count, gb:sports
 * sports - 0:default, 1:minor, 2:major
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-# domino
+# Data preprocessing
+# Domino
 data$sports <- as.factor(data$sports)
 so_data_2014 <- subset(data, year==2014)
 
@@ -363,7 +502,7 @@ sot_data <- so_data_2014 %>%
 
 sot_data$time = as.factor(sot_data$time)
 
-# mister
+# Mister
 data2$sports <- as.factor(data2$sports)
 so_data2_2014 <- subset(data2, year==2014)
 
@@ -375,23 +514,25 @@ sot_data2 <- so_data2_2014 %>%
 
 sot_data2$time = as.factor(sot_data2$time)
 
-#view graph
+## Make a graph
+# Domino
 p1<-ggplot(sot_data, aes(x=time, y=count, group=sports, color=sports, linetype=sports)) + 
   geom_line(lwd=2) +
   ylim(0, max(sot_data$count)) +
   ggtitle("Domino")
 
+# Mister
 p2<-ggplot(sot_data2, aes(x=time, y=count, group=sports, color=sports, linetype=sports)) + 
   geom_line(lwd=2) +
   ylim(0, max(sot_data2$count)) +
   ggtitle("Mister")
 
-grid.arrange(p1,p2,ncol=2)
+grid.arrange(p1,p2,nrow=2)
 
 ```
 
 
-## (12)-2x:time, y:duration
+## x:time, y:duration
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Domino
 data$sports <- as.factor(data$sports)
@@ -417,14 +558,16 @@ sot_data2 <- so_data2_2014 %>%
 
 sot_data2$time = as.factor(sot_data2$time)
 
-#view graph
+## Make a graph
+# Domino
 p1<-ggplot(sot_data, aes(x=time, y=duration, group=sports, color=sports, linetype=sports)) + 
   geom_line(lwd=2) +
   ggtitle("Domino")
 
+# Mister
 p2<-ggplot(sot_data2, aes(x=time, y=duration, group=sports, color=sports, linetype=sports)) + 
   geom_line(lwd=2) +
   ggtitle("Mister")
 
-grid.arrange(p1,p2,ncol=2)
+grid.arrange(p1,p2,nrow=2)
 ```
