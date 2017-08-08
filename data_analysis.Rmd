@@ -419,11 +419,8 @@ grid.arrange(p1,p2,ncol=2)
 ```
 
 # (9) PRECIPITATION
-## x:precClass, y:count
-* highest in rainy days
-* lowest in clear days
+## DATA PREPROCESSING
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-## Data preprocessing
 # Domino
 precClass_data = data %>%
   group_by(precClass) %>%
@@ -437,7 +434,12 @@ precClass_data2 = data2 %>%
   summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
             duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
             total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+```
 
+## x:precClass, y:count
+* highest in rainy days
+* lowest in clear days
+```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Make a graph
 # Domino
 p1<-ggplot(precClass_data,aes(x=precClass,y=count),na.rm=TRUE) + 
@@ -451,6 +453,39 @@ p2<-ggplot(precClass_data2,aes(x=precClass,y=count),na.rm=TRUE) +
 
 grid.arrange(p1,p2,ncol=2)
 ```
+
+## x:precClass, y:duration
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(precClass_data,aes(x=precClass,y=duration),na.rm=TRUE) + 
+  geom_col() + 
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(precClass_data2,aes(x=precClass,y=duration),na.rm=TRUE) + 
+  geom_col() + 
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:precClass, y:total
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(precClass_data,aes(x=precClass,y=total),na.rm=TRUE) + 
+  geom_col() + 
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(precClass_data2,aes(x=precClass,y=total),na.rm=TRUE) + 
+  geom_col() + 
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
 
 # (10) TEMPERATURE
 ## DATA PREPROCESSING
@@ -479,6 +514,36 @@ p1<- ggplot(tempClass_data,aes(x=tempClass,y=count),na.rm=TRUE)+
   ggtitle("Domino")
 
 p2<- ggplot(tempClass_data2,aes(x=tempClass,y=count),na.rm=TRUE)+
+  geom_col()+
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:tempClass, y:duration
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+p1<- ggplot(tempClass_data,aes(x=tempClass,y=duration),na.rm=TRUE)+
+  geom_col()+
+  ggtitle("Domino")
+
+# Mister
+p2<- ggplot(tempClass_data2,aes(x=tempClass,y=duration),na.rm=TRUE)+
+  geom_col()+
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:tempClass, y:total
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+p1<- ggplot(tempClass_data,aes(x=tempClass,y=total),na.rm=TRUE)+
+  geom_col()+
+  ggtitle("Domino")
+
+# Mister
+p2<- ggplot(tempClass_data2,aes(x=tempClass,y=total),na.rm=TRUE)+
   geom_col()+
   ggtitle("Mister")
 
