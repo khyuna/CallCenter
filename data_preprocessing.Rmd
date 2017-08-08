@@ -1,0 +1,18 @@
+---
+title: "Call Center Data Analysis"
+author: "jinyoung, hyunah, suyoung, yunhwan"
+date: "20170808"
+output: html_document
+---
+
+# Call data import
+```{r error=FALSE,message=FALSE,warning=FALSE}
+setwd("C:/CallCenter")
+data<-read.csv("domino6_2.csv", header=TRUE)
+data2<-read.csv("mister2_2.csv", header=TRUE)
+```
+
+# Data preprocessing 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+
+```
