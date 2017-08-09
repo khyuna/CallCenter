@@ -9,24 +9,50 @@ output: html_document
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 #setwd("C:/CallCenter")
 data<-read.csv("domino3_9.csv", header=TRUE)
-data2<-read.csv("mister2_2.csv", header=TRUE)
+str(data)
+which(is.na(data$dust))
+#data2<-read.csv("mister3_1.csv", header=TRUE)
 ```
 
 # Call data import
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 library(ggplot2)
 library(dplyr)
+library(lubridate)
 ```
 
+
 # Data preprocessing 
+## date2
+```{r error=FALSE,message=FALSE,warning=FALSE}
+str(data)
+newDate<-paste(data$time, ':00', sep="")
+data$date2<-paste(data$date, newDate)
+```
+
+## wday, wday_num 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+str(data)
+head(data)
+View(data)
+
+data$date <- as.Date(data$date)
+data$wday = wday(data$date, label=TRUE)
+data$wday_num = wday(data$date)
+data$wday_num = data$wday_num-1 
+
+
+```
 
 ## total 
 * total = count * duration 
 * total 칼럼은 콜센터의 분주함을 나타내는 정도이다.
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-View(data)
-head(data)
-data$total = data$count*data$duration #count 칼럼과 duration 칼럼을 곱함
+
+str(data)
+summary(data$duration)
+data$total=data$count*data$duration #count 칼럼과 duration 칼럼을 곱함
+
 ```
 
 ## domino Store Count 
@@ -42,12 +68,15 @@ lbls<-paste(lbls,"%", sep="")
 p1 = pie(slices, col=rainbow(length(slices)), labels=lbls, main="Domino Pizza Store")
 
 
-grid.arrange(p1, p2, nrow=2)
+#grid.arrange(p1, p2, nrow=2)
 ```
 ## prec, temp 수
 * prec은 강수량, temp는 기온을 나타내는 연속형 변수
 * 출처 : https://data.kma.go.kr/cmmn/main.do
 ```{r error=FALSE,message=FALSE,warning=FALSE}
+str(data)
+
+
 s_weather = read.csv("s_weather.csv", header=TRUE)
 g_weather = read.csv("g_weather.csv", header=TRUE)
 s_weather
@@ -67,12 +96,11 @@ summary_weather = select(merged_weather,c(date,temp,prec))
 summary_weather
 
 # data + summary_weather
-newDate<-paste(data$time, ':00', sep="")
-data$date2<-paste(data$date, newDate)
 data = merge(data,summary_weather, by.x="date2", by.y="date", all.x=TRUE)
-
+str(data)
 
 ```
+
 ## precClass, tempClass
 * prec, temp 등 연속형 데이터를 범주화한 변수
 * 집중호우 기준은 30mm이지만 30mm 이상인 경우가 거의 없어 10mm이상을 S클래스로 지정한다.
@@ -80,7 +108,7 @@ data = merge(data,summary_weather, by.x="date2", by.y="date", all.x=TRUE)
 ggplot(data,aes(x=prec,y=count)) +
   geom_point()
 
-head(data)
+str(data)
 # domino
 data$precClass<-ifelse(data$prec==0,'N',ifelse(data$prec<5,'L',ifelse(data$prec<10, 'H','S')))
 data$tempClass<-ifelse(data$temp<0,'0',ifelse(data$temp<10,'1',ifelse(data$temp<20, '2',ifelse(data$temp<30,'3','4'))))
@@ -88,8 +116,8 @@ data$tempClass<-ifelse(data$temp<0,'0',ifelse(data$temp<10,'1',ifelse(data$temp<
 # mister
 #data2$precClass<-ifelse(data2$prec==0,'N',ifelse(data2$prec<5,'L',ifelse(data2$prec<10,'H','S')))
 
-# add weather column (temp,prec,tempClass,precClass)
-write.csv(data,"domino4_1.csv")
+
+
 ```
 
 ## holiday
@@ -97,17 +125,15 @@ write.csv(data,"domino4_1.csv")
 * 0:안쉬는날 / 1:하루 쉬는날 / 2:이틀 연속 쉬는날 / 3:삼일 이상 쉬는날 / 4:민족대명절
 * naver에서 직접 공휴일 데이터 입력하여 domino4_2.csv를 생성한다.
 
-```{r error=FALSE,message=FALSE,warning=FALSE}
-data<-read.csv("domino4_2.csv", header=TRUE)
-data$
-head(data)
-```
+
 
 ## holiday order
 * 3일 이상의 공휴일 중에서 몇째날인지 나타내는 변수 
 * 0:3일 이상 공휴일이 아닌 날 / 1:첫번째날 / 2:두번째날 / 3:세번째날 / 4:네번째날
 * domino4_3.csv를 생성한다.
 ```{r error=FALSE,message=FALSE,warning=FALSE}
+str(data)
+
 holidayRow<-filter(data, data$holiday==3)
 temp1<-as.numeric(holidayRow$date[1])
 holidayRow$holiday2[1]<-1
@@ -148,11 +174,8 @@ holiday3<-subset(holidayRow, select=c(date2, holiday2))
 data<-merge(data, holiday3, by.x="date2", by.y="date2", all=TRUE)
 data$holiday2[is.na(data$holiday2)]<-0
 
-head(data)
-data$holiday = as.factor(data$holiday)
-data$holiday2 = as.factor(data$holiday2)
+str(data)
 
-write.csv(data,"domino4_3.csv")
 ```
 
 ## sports
@@ -160,21 +183,12 @@ write.csv(data,"domino4_3.csv")
 * 0:대한민국 경기가 아닌 것 / 1:대한민국 경기 중 매달 매치 아닌 경기 / 2:대한민국 경기중 매달 매치 경기
 * daum에서 직접 경기 데이터를 입력하여 domino4_4.csv를 생성한다.
 * 출처 : http://score.sports.media.daum.net/og/sochi/schedule/main.daum?date=20140223
-```{r error=FALSE,message=FALSE,warning=FALSE}
-data<-read.csv("domino4_4.csv", header=TRUE)
-head(data)
 
-```
 ## baseball 
 * 프로야구 경기를 나타내는 변수 
 * 1:시범경기 / 2:정규시즌 / 3:포스트시즌
 * 출처 : http://www.koreabaseball.com/Schedule/Schedule.aspx
-```{r error=FALSE,message=FALSE,warning=FALSE}
-data<-read.csv("domino4_5.csv", header=TRUE)
-head(data)
-table(data$baseball)
 
-```
 
 ## dust 
 * 출처 : https://data.kma.go.kr/cmmn/main.do
@@ -191,15 +205,52 @@ merged_dust
 
 # 서울,경기 날씨 데이터 평균 
 merged_dust$dust <- (merged_dust$dust.x + merged_dust$dust.y)/2
+merged_dust
+
 
 # Column Select 
 summary_dust = select(merged_dust,c(date2,dust))
 summary_dust
 
+
 # data + summary_weather
 data = merge(data,summary_dust, by.x="date2", by.y="date2", all.x=TRUE)
 data
-write.csv(data,"domino4_6.csv")
+View(data)
+str(data)
+
+
 ```
+## dustClass
+* 300 / 150
+* 출처:http://www.airkorea.or.kr/warningActKnack
+```{r error=FALSE,message=FALSE,warning=FALSE}
+summary(data$dust)
+plot(data$dust)
 
+data$dustClass<-ifelse(data$dust<150,'N',ifelse(data$dust<300,'L','H'))
+str(data)
+table(data$dustClass)
+```
+## data structure
+```{r error=FALSE,message=FALSE,warning=FALSE}
 
+data$date2 = as.factor(data$date2)
+data$date = as.factor(data$date)
+data$time = as.factor(data$time)
+data$holiday = as.factor(data$holiday)
+data$sports = as.factor(data$sports)
+data$baseball = as.factor(data$baseball)
+data$wday_num = as.factor(data$wday_num)
+data$precClass = as.factor(data$precClass)
+data$tempClass = as.factor(data$tempClass)
+data$holiday2 = as.factor(data$holiday2)
+data$dustClass = as.factor(data$dustClass)
+data$year = as.factor(data$year)
+data$month = as.factor(data$month)
+data$day = as.factor(data$day)
+
+str(data)
+write.csv(data,'domino.csv')
+
+```
