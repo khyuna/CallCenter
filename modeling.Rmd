@@ -411,7 +411,7 @@ confusionMatrix(prediction, wotestData$totalClass4)
 
 # WEEKDAY VS WEEKEND
 ##부분 데이터 학습 모델
-## DATA PARTITION
+## DATA PARTITION 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Partition into weekend vs weekday
 id_weekend = which(myData$wday=="Sun"|myData$wday=="Sat")
