@@ -12,7 +12,8 @@ output:
 getwd()
 setwd("/Users/suyoung/Desktop")
 data<-read.csv("domino7.csv", header=TRUE)
-data2<-read.csv("mister2_2.csv", header=TRUE)
+data2<-read.csv("mister3_1.csv", header=TRUE)
+
 ```
 
 ## Install Library
@@ -73,6 +74,7 @@ confusionMatrix(prediction3, testData3$totalClass3)
 myData$totalClass4 <- ntile(myData$total, 4)
 myData$totalClass4 <- as.factor(myData$totalClass4)
 
+summary(myData$totalClass4)
 # Partition data set into training and test
 sample_idx4 <- createDataPartition(y=myData$totalClass4, p=0.7, list=FALSE)
 trainData4 <- myData[sample_idx4, ]
@@ -115,7 +117,7 @@ confusionMatrix(prediction8, testData8$totalClass8)
 ## RANDOM FOREST 
 ## Preprocessing
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-myData <- subset(data, select = c(year, month, time, wday, holiday, precClass, tempClass,total))
+myData <- subset(data2, select = c(year, month, time, wday, holiday, precClass, tempClass,total))
 myData$year <- as.factor(myData$year)
 myData$month <- as.factor(myData$month)
 myData$time <- as.factor(myData$time)
@@ -346,11 +348,12 @@ prediction8<-predict(model8, newdata=testData8)
 confusionMatrix(prediction8,testData8$totalClass8)
 ```
 
-#부분 데이터 셋
+
+#부분 데이터 학습 모델 vs 전체 데이터 학습 모델
 ## PREPROCESSING
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Preprocessing
-myData <- subset(data, select = c(year, month, time, wday, holiday, precClass, tempClass, total))
+myData <- subset(data2, select = c(year, month, time, wday, holiday, precClass, tempClass, total))
 myData$year <- as.factor(myData$year)
 myData$month <- as.factor(myData$month)
 myData$time <- as.factor(myData$time)
@@ -363,7 +366,8 @@ myData$wday <- as.factor(myData$wday)
 myData <- myData[complete.cases(myData),]
 ```
 
-# WITHOUT 10 & 22: PARTITION
+# WITHOUT 10 & 22
+##부분 데이터 학습 모델
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Remove 10, 22
 wo10Data <- subset(myData, time!=10)
@@ -375,19 +379,38 @@ wo10Data$totalClass4 <- as.factor(wo10Data$totalClass4)
 
 # Partition data set into training and test
 sample_idx <- createDataPartition(y=wo10Data$totalClass4, p=0.7, list=FALSE)
-trainData <- wo10Data[sample_idx, ]
-testData <- wo10Data[-sample_idx, ]
+wotrainData <- wo10Data[sample_idx, ]
+wotestData <- wo10Data[-sample_idx, ]
 
 # Build a model
 features <- c("year", "month", "time", "wday", "holiday", "precClass", "tempClass", "totalClass4")
-model <- randomForest(totalClass4~., data=trainData[,features], importance=TRUE)
+model <- randomForest(totalClass4~., data=wotrainData[,features], importance=TRUE)
 
 # Predict accuracy
-prediction <- predict(model, testData[,features], type='class')
-confusionMatrix(prediction, testData$totalClass4)
+prediction <- predict(model, wotestData[,features], type='class')
+confusionMatrix(prediction, wotestData$totalClass4)
 ```
 
+# WITHOUT 10 & 22: PARTITION
+## 전체 데이터 학습 모델
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# 전체 데이터 학습 모델
+myData$totalClass4 <- ntile(myData$total, 4)
+myData$totalClass4 <- as.factor(myData$totalClass4)
+sample_idx4 <- createDataPartition(y=myData$totalClass4, p=0.7, list=FALSE)
+trainData4 <- myData[sample_idx4, ]
+testData4 <- myData[-sample_idx4, ]
+model4 <- randomForest(totalClass4~year+month+time+wday+holiday+precClass+tempClass, data=trainData4, importance=TRUE)
+
+# Predict Accuracy
+prediction <- predict(model4, wotestData[,features], type='class')
+confusionMatrix(prediction, wotestData$totalClass4)
+
+```
+
+
 # WEEKDAY VS WEEKEND
+##부분 데이터 학습 모델
 ## DATA PARTITION
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Partition into weekend vs weekday
@@ -405,6 +428,7 @@ weekday$weekdayClass<-as.factor(weekday$weekdayClass)
 ```
 
 # WEEKDAY VS WEEKEND
+##부분 데이터 학습 모델
 ## WEEKDAY
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Partition data set into training and test
@@ -421,6 +445,7 @@ confusionMatrix(prediction, weekdayTest$weekdayClass)
 ```
 
 # WEEKDAY VS WEEKEND
+##부분 데이터 학습 모델
 ## WEEKEND
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Partition data set into training and test
@@ -434,6 +459,20 @@ model<-randomForest(weekendTrain$weekendClass~month+time+wday+holiday+precClass+
 # Predict accuracy
 prediction <- predict(model, weekendTest, type='class')
 confusionMatrix(prediction, weekendTest$weekendClass)
+```
+
+# WEEKEND VS WEEKDAY
+##전체 데이터 학습 모델
+```{r error=FALSE,message=FALSE,warning=FALSE}
+
+# Predict Accuracy for Weekend
+prediction <- predict(model4, weekendTest[,features], type='class')
+confusionMatrix(prediction, weekendTest$totalClass4)
+
+# Predict Accuracy for Weekday
+prediction <- predict(model4, weekdayTest[,features], type='class')
+confusionMatrix(prediction, weekdayTest$totalClass4)
+
 ```
 
 # PEAK(12, 18, 19) & NON-PEAK
@@ -483,4 +522,18 @@ model<-randomForest(nonpeakTrain$nonpeakClass~month+time+wday+holiday+precClass+
 # Predict accuracy
 prediction <- predict(model, nonpeakTest, type='class')
 confusionMatrix(prediction, nonpeakTest$nonpeakClass)
+```
+
+# PEAK VS NONPEAK
+##전체 데이터 학습 모델
+```{r error=FALSE,message=FALSE,warning=FALSE}
+
+# Predict Accuracy for Peak
+prediction <- predict(model4, peakTest[,features], type='class')
+confusionMatrix(prediction, peakTest$totalClass4)
+
+# Predict Accuracy for nonPeak
+prediction <- predict(model4, nonpeakTest[,features], type='class')
+confusionMatrix(prediction, nonpeakTest$totalClass4)
+
 ```
