@@ -5,14 +5,13 @@ date: '20170809'
 output:
   word_document: default
   html_document: default
----
+--- 
 
 ## Call data import
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 getwd()
 setwd("/Users/suyoung/Desktop")
-data<-read.csv("domino7.csv", header=TRUE)
-data2<-read.csv("mister3_1.csv", header=TRUE)
+data<-read.csv("mister.csv", header=TRUE)
 
 ```
 
@@ -25,6 +24,8 @@ library(randomForest)
 library(caret)
 library(dplyr)
 library(rpart.plot)
+library(ggplot2)
+
 ```
 
 # totalClass와 RF 선택 이유
@@ -117,7 +118,7 @@ confusionMatrix(prediction8, testData8$totalClass8)
 ## RANDOM FOREST 
 ## Preprocessing
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-myData <- subset(data2, select = c(year, month, time, wday, holiday, precClass, tempClass,total))
+myData <- subset(data, select = c(year, month, time, wday, holiday, precClass, tempClass,total))
 myData$year <- as.factor(myData$year)
 myData$month <- as.factor(myData$month)
 myData$time <- as.factor(myData$time)
@@ -353,7 +354,7 @@ confusionMatrix(prediction8,testData8$totalClass8)
 ## PREPROCESSING
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Preprocessing
-myData <- subset(data2, select = c(year, month, time, wday, holiday, precClass, tempClass, total))
+myData <- subset(data, select = c(year, month, time, wday, holiday, precClass, tempClass, total))
 myData$year <- as.factor(myData$year)
 myData$month <- as.factor(myData$month)
 myData$time <- as.factor(myData$time)
@@ -411,7 +412,7 @@ confusionMatrix(prediction, wotestData$totalClass4)
 
 # WEEKDAY VS WEEKEND
 ##부분 데이터 학습 모델
-## DATA PARTITION 
+## DATA PARTITION
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Partition into weekend vs weekday
 id_weekend = which(myData$wday=="Sun"|myData$wday=="Sat")
@@ -537,3 +538,64 @@ prediction <- predict(model4, nonpeakTest[,features], type='class')
 confusionMatrix(prediction, nonpeakTest$totalClass4)
 
 ```
+
+# ERROR CASE
+## 전체데이터학습모델
+## MAKE A RANDOM FOREST 
+## totalClass4
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# create totalClass4
+myData$totalClass4 <- ntile(myData$total, 4)
+myData$totalClass4 <- as.factor(myData$totalClass4)
+
+# Partition data set into training and test
+sample_idx4 <- createDataPartition(y=myData$totalClass4, p=0.7, list=FALSE)
+trainData4 <- myData[sample_idx4, ]
+testData4 <- myData[-sample_idx4, ]
+
+# Build a randomForest model
+model4 <- randomForest(totalClass4~year+month+time+wday+holiday+precClass+tempClass, data=trainData4, importance=TRUE)
+
+```
+
+
+## RANDOM FOREST & TOTALCLASS4
+## MONTH
+```{r error=FALSE,message=FALSE,warning=FALSE}
+testData4$prediction4 <- predict(model4, testData4, type='class')
+
+error_id = which(testData4$totalClass4 != testData4$prediction4)
+count<-testData4[error_id,]$month
+
+plot(count, main="Error Case for Each Month", xlab="Month",ylab="Count")
+```
+
+# ERROR CASE
+## RANDOM FOREST & TOTALCLASS4
+## TIME
+```{r error=FALSE,message=FALSE,warning=FALSE}
+testData4$prediction4 <- predict(model4, testData4, type='class')
+
+error_id = which(testData4$totalClass4 != testData4$prediction4)
+count<-testData4[error_id,]$time
+
+plot(count, main="Error Case for Each Time", xlab="Time",ylab="Count")
+
+```
+
+# ERROR CASE
+## RANDOM FOREST & TOTALCLASS4
+## WDAY
+```{r error=FALSE,message=FALSE,warning=FALSE}
+
+testData4$prediction4 <- predict(model4, testData4, type='class')
+
+error_id = which(testData4$totalClass4 != testData4$prediction4)
+count<-testData4[error_id,]$wday
+
+plot(count, main="Error Case for Each Day", xlab="Day of the Week",ylab="Count")
+
+```
+
+
+
