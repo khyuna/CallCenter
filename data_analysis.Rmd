@@ -1,30 +1,60 @@
 ---
 title: "Call Center Data Analysis"
 author: "jinyoung, hyunah, suyoung, yunhwan"
-date: '20170807'
+date: '20170809'
 output:
-  html_document: default
   word_document: default
+  html_document: default
 ---
 
 # Call data import
+* 통계 분석에 필요한 도미노피자 및 미스터 피자 데이터를 import한다. 이때, 각 데이터 파일에 NA값이 존재할 수 있으므로 이를 제거하는 작업이 필요하다. 
+* 도미노 피자 데이터는 domino7.csv파일, 미스터 피자 데이터는 mister3.csv파일이다.
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Read data
 #setwd("C:/CallCenter")
-data<-read.csv("domino7.csv", header=TRUE)
-data2<-read.csv("mister3.csv", header=TRUE)
+data<-read.csv("domino.csv", header=TRUE)
+data2<-read.csv("mister.csv", header=TRUE)
 
 # Remove NA
 data<-data[complete.cases(data),]
 data2<-data2[complete.cases(data2),]
 
+# Data preprocessing
+data$date2 = as.factor(data$date2)
+data$date = as.factor(data$date)
+data$time = as.factor(data$time)
+data$holiday = as.factor(data$holiday)
+data$sports = as.factor(data$sports)
+data$baseball = as.factor(data$baseball)
+data$wday_num = as.factor(data$wday_num)
+data$precClass = as.factor(data$precClass)
+data$tempClass = as.factor(data$tempClass)
+data$holiday2 = as.factor(data$holiday2)
+data$dustClass = as.factor(data$dustClass)
+data$year = as.factor(data$year)
+data$month = as.factor(data$month)
+data$day = as.factor(data$day)
 
-data$holiday <- as.factor(data$holiday)
-data2$holiday <- as.factor(data2$holiday)
+data2$date2 = as.factor(data2$date2)
+data2$date = as.factor(data2$date)
+data2$time = as.factor(data2$time)
+data2$holiday = as.factor(data2$holiday)
+data2$sports = as.factor(data2$sports)
+data2$baseball = as.factor(data2$baseball)
+data2$wday_num = as.factor(data2$wday_num)
+data2$precClass = as.factor(data2$precClass)
+data2$tempClass = as.factor(data2$tempClass)
+data2$holiday2 = as.factor(data2$holiday2)
+data2$dustClass = as.factor(data2$dustClass)
+data2$year = as.factor(data2$year)
+data2$month = as.factor(data2$month)
+data2$day = as.factor(data2$day)
 
 ```
 
-# Install Library
+# Load Library
+* 통계 분석에 필요한 라이브러리를 로드한다.
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 library(rpart.plot)
 library(gplots)
@@ -35,107 +65,10 @@ library(ggplot2)
 library(sqldf)
 require('gridExtra')
 ```  
-# (1) DAILY(7DAYS)
-## x:daily(7days), y:count
-```{r error=FALSE,message=FALSE,warning=FALSE}
-# Domino
-count = as.numeric(as.factor(data$count))
-c_data <- as.xts(count, order.by=as.Date(data$date))
-c_weekly <- apply.weekly(c_data, mean)
 
-# Mister
-count2 = as.numeric(as.factor(data2$count))
-c_data2 <- as.xts(count2, order.by=as.Date(data2$date))
-c2_weekly <- apply.weekly(c_data2,mean)
-
-# Make a graph
-par(mfrow = c(1, 2))
-plot(c_weekly, main="Domino", xlab="daily(7days)", ylab="count", xlim=c(0,1000))
-plot(c2_weekly, main="Mister",xlab="daily(7days)", ylab="count", xlim=c(0,1000))
-```
-
-# (2) TIME
+# (1) YEAR
 ## DATA PREPROCESSING
-```{r error=FALSE,message=FALSE,warning=FALSE}
-# Domino
-ty_data = data %>%
-  group_by(time,year) %>%
-  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
-            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-
-# Mister
-ty_data2 = data2 %>%
-  group_by(time,year) %>%
-  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
-            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-```
-
-## x:time, y:count, gb:year
-* highest number of calls for dinnertime
-* lowest for opening/closing time
-```{r error=FALSE,message=FALSE,warning=FALSE}
-## Make a graph
-# Domino
-p1 <- ggplot(ty_data,aes(x=time,y=count,group=year,color=year)) + 
-  geom_line(aes(color=year)) + 
-  geom_point() +
-  scale_color_gradient(low="orange",high="blue") +
-  ggtitle("Domino")
-
-# Mister
-p2<-ggplot(ty_data2,aes(x=time,y=count,group=year,color=year)) + 
-  geom_line(aes(color=year)) +
-  geom_point() +
-  scale_color_gradient(low="orange",high="blue") +
-  ggtitle("Mister")
-
-grid.arrange(p1, p2, nrow=2)
-```
-
-## x:time, y:duration, gb:year
-```{r error=FALSE,message=FALSE,warning=FALSE}
-## Make a graph
-# Domino
-p1 <- ggplot(ty_data, aes(x=time, y=duration, group=year, color=year)) + 
-  geom_line(aes(color=year)) + 
-  geom_point() +
-  scale_color_gradient(low="orange", high="blue") +
-  ggtitle("Domino")
-
-# Mister
-p2<-ggplot(ty_data2, aes(x=time, y=duration, group=year, color=year)) + 
-  geom_line(aes(color=year)) + 
-  geom_point() +
-  scale_color_gradient(low="orange", high="blue") +
-  ggtitle("Mister")
-
-grid.arrange(p1, p2, nrow=2)
-```
-
-## x:time, y:total, gb:year
-```{r error=FALSE,message=FALSE,warning=FALSE}
-## Make a graph
-# Domino
-p1 <- ggplot(ty_data, aes(x=time, y=total, group=year, color=year)) + 
-  geom_line(aes(color=year)) + 
-  geom_point() +
-  scale_color_gradient(low="orange", high="blue") +
-  ggtitle("Domino")
-
-# Mister
-p2<-ggplot(ty_data2, aes(x=time, y=total, group=year, color=year)) + 
-  geom_line(aes(color=year)) + 
-  geom_point() +
-  scale_color_gradient(low="orange", high="blue") +
-  ggtitle("Mister")
-
-grid.arrange(p1, p2, nrow=2)
-```
-
-# (3) YEAR
-## DATA PREPROCESSING
+* 연도별 분석을 위한 데이터 전처리 과정이다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Domino
 d_data = data %>%
@@ -153,6 +86,7 @@ d_data2 = data2 %>%
 ```
 
 ## x:year, y:count (bar graph)
+* 도미노 피자는 해를 거듭하면서 콜센터 Call수(count)가 증가하는 반면 미스터 피자는 해가 지날수록 콜센터 Call수(count)가 감소된다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Make a graph
 # Domino
@@ -165,31 +99,36 @@ grid.arrange(p1,p2,ncol=2)
 ```
 
 ## x:year, y:duration (bar graph)
+* 도미노 피자가 콜센터 Call수(count)는 미스터 피자보다 높았지만, 평균 통화시간(duration)은 미스터 피자가 더 높은 경향을 보인다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Make a graph
 # Domino
-p1<-ggplot(d_data,aes(x=year,y=duration)) + geom_col() + ggtitle("Domino")
+p1<-ggplot(d_data,aes(x=year,y=duration)) + geom_col() + ggtitle("Domino")+ylim(0,125)
 
 # Mister
-p2<-ggplot(d_data2,aes(x=year,y=duration)) + geom_col() + ggtitle("Mister")
+p2<-ggplot(d_data2,aes(x=year,y=duration)) + geom_col() + ggtitle("Mister")+ylim(0,125)
 
 grid.arrange(p1,p2,ncol=2)
 ```
 
 ## x:year, y:total (bar graph)
+* total을 기준으로 그린 bar그래프는 count를 기준으로 그린 bar그래프와 매우 유사한 경향성을 보인다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Make a graph
 # Domino
-p1<-ggplot(d_data,aes(x=year,y=total)) + geom_col() + ggtitle("Domino")
+p1<-ggplot(d_data,aes(x=year,y=total)) + geom_col() + ggtitle("Domino")+ylim(0,85000)
 
 # Mister
-p2<-ggplot(d_data2,aes(x=year,y=total)) + geom_col() + ggtitle("Mister")
+p2<-ggplot(d_data2,aes(x=year,y=total)) + geom_col() + ggtitle("Mister")+ylim(0,85000)
+
 
 grid.arrange(p1,p2,ncol=2)
 ```
 
-# (4) MONTH
+
+# (2) MONTH
 ## DATA PREPROCESSING
+* 월별 분석을 위한 데이터 전처리 단계이다.
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Domino
 my_data = data %>%
@@ -207,68 +146,86 @@ my_data2 = data2 %>%
 ```
 
 ## x:month, y:count, gb:year
+* 도미노 피자 데이터는 매 해 비슷한 양상을 보이고 있다. 11월과 12월에 증가하고, 특히 12월에 급격하게 증가하는 양상을 보인다. 하지만 2015년 10월 데이터에서는 급격하게 감소하는 추세를 보여 해당 데이터는 outlier여부를 확인해야 한다. 
+* 미스터 피자 데이터는 2015년, 2016년, 2017년에는 비슷한 양상을 보인다. 2013년과 2014년에는 특정한 패턴이 보이지 않으며 2013년 2월과 8월, 2014년 5월에는 급격하게 증가하는 양상을 보여 이에 대한 추가 조사 및 데이터 제공이 필요하다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Make a graph
 # Domino
-p1<-ggplot(my_data,aes(x=as.factor(month),y=count,group=year,color=year)) + 
-  geom_line(aes(color=year)) + 
-  geom_point() +labs(x="month")+
-  scale_color_gradient(low="orange",high="blue") +
-  ggtitle("Domino")
+p1<-ggplot(my_data,aes(x=month,y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) +
+  geom_point() + ggtitle("Domino")
 
 # Mister
-p2<-ggplot(my_data2,aes(x=as.factor(month),y=count,group=year,color=year)) + 
-  geom_line(aes(color=year)) + labs(x="month")+
-  geom_point() + 
-  scale_color_gradient(low="orange",high="blue") + 
-  ggtitle("Mister")
+p2<-ggplot(my_data2,aes(x=month,y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() + ggtitle("Mister")
 
 grid.arrange(p1,p2,nrow=2)
 ```
 
 ## x:month, y:duration, gb:year
+* 도미노 피자와 미스터 피자 데이터 모두 평균 통화시(duration)에 대해서는 특정한 패턴이 보이지 않는다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Make a graph
 # Domino
-p1<-ggplot(my_data,aes(x=as.factor(month),y=duration,group=year,color=year)) + 
-  geom_line(aes(color=year)) + labs(x="month")+
-  geom_point() +
-  scale_color_gradient(low="orange",high="blue") +
+p1<-ggplot(my_data,aes(x=month,y=duration,group=year,color=year)) + 
+  geom_line(aes(color=year)) +
+  geom_point() + ylim(100,130)+
   ggtitle("Domino")
 
 # Mister
-p2<-ggplot(my_data2,aes(x=as.factor(month),y=duration,group=year,color=year)) + 
-  geom_line(aes(color=year)) + labs(x="month")+
-  geom_point() + 
-  scale_color_gradient(low="orange",high="blue") + 
+p2<-ggplot(my_data2,aes(x=month,y=duration,group=year,color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() + ylim(100,130)+
   ggtitle("Mister")
 
 grid.arrange(p1,p2,nrow=2)
 ```
 
 ## x:month, y:total, gb:year
+* total을 기준으로 그린 line그래프는 count를 기준으로 그린 line그래프와 매우 유사한 경향성을 보인다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Make a graph
 # Domino
-p1<-ggplot(my_data,aes(x=as.factor(month), y=total, group=year, color=year)) + 
-  geom_line(aes(color=year)) +labs(x="month")+ 
-  geom_point() +
-  scale_color_gradient(low="orange",high="blue") +
-  ggtitle("Domino")
+p1<-ggplot(my_data,aes(x=month, y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) +
+  geom_point() + ggtitle("Domino")
 
 # Mister
-p2<-ggplot(my_data2,aes(x=as.factor(month), y=total, group=year, color=year)) + 
-  geom_line(aes(color=year)) + labs(x="month")+
-  geom_point() + 
-  scale_color_gradient(low="orange",high="blue") + 
-  ggtitle("Mister")
+p2<-ggplot(my_data2,aes(x=month, y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() + ggtitle("Mister")
 
 grid.arrange(p1, p2, nrow=2)
 ```
 
-# (5) WDAY
+
+# (3) WEEKLY
+## x:weekly, y:count
+* 일주일 단위로 콜센터 Call 수(count)를 분석하였다. 
+* 도미노 피자는 매년 증가하는 추세를 보이고, 미스터 피자는 매년 감소하는 추세를 보인다.
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+count = as.numeric(as.factor(data$count))
+c_data <- as.xts(count, order.by=as.Date(data$date))
+c_weekly <- apply.weekly(c_data, mean)
+
+# Mister
+count2 = as.numeric(as.factor(data2$count))
+c_data2 <- as.xts(count2, order.by=as.Date(data2$date))
+c2_weekly <- apply.weekly(c_data2, mean)
+
+# Make a graph
+par(mfrow = c(1, 2))
+plot(c_weekly, main="Domino", xlab="weekly", ylab="count", ylim=range(0:1000))
+plot(c2_weekly, main="Mister",xlab="weekly", ylab="count", ylim=range(0:1000))
+```
+
+
+# (4) WDAY
 ## x:wday, y:count 
 * Sunday > Saturday > Friday
+* 도미노 피자와 미스터 피자 데이터 모두 주말에 콜센터 Call수(count)가 높다. 평일 중에서는 도미노 피자 데이터는 화요일이 높은 경향있으며, 미스터 피자 데이터는 금요일에 높은 경향이 있다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Data preprocessing
 # Domino
@@ -308,6 +265,7 @@ print(p3)
 
 ## x:wday, y:count, gb:year
 * Sunday > Saturday > Friday
+* 연도별로 요일에 대한 콜센터 Call수(count)를 분석한 결과이다. 도미노 피자와 미스터 피자 데이터의 모든 연도에서 주말에 콜센터 Call수(count)가 높았다. 에외적으로 2014년 미스터 피자 데이터에서는 금요일의 콜센터 Call수(count)가 주말보다 높은 경향을 보여 이에 대한 추가적인 조사 및 데이터 제공이 필요하다.  
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Data preprocessing
 # Domino
@@ -330,23 +288,242 @@ labels <- c("Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun")
 # Domino
 p1<-ggplot(wy_data,aes(x=factor(wday, levels=labels ,ordered=TRUE),y=count,group=year,color=year)) + 
   geom_line(aes(color=year)) + 
-  geom_point() +labs(x="wday")+
-  scale_color_gradient(low="orange",high="blue") + ylim(0,1300)+
+  geom_point() +labs(x="wday")+  ylim(0,1300)+
   ggtitle("Domino")
 
 # Mister
 p2<-ggplot(wy_data2,aes(x=factor(wday, levels=labels ,ordered=TRUE),y=count,group=year,color=year)) + 
   geom_line(aes(color=year)) + 
-  geom_point() +labs(x="wday")+
-  scale_color_gradient(low="orange",high="blue") + ylim(0,1300)+
+  geom_point() +labs(x="wday")+ ylim(0,1300)+
   ggtitle("Mister")
 
 grid.arrange(p1,p2,nrow=2)
 ```
 
-# (6) HOLIDAY
+
+# (5) TIME
+## DATA PREPROCESSING
+* 시간별 분석을 위한 데이터 전처리 과정이다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+ty_data = data %>%
+  group_by(time,year) %>%
+  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
+            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+
+# Mister
+ty_data2 = data2 %>%
+  group_by(time,year) %>%
+  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
+            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+```
+
+## x:time, y:count, gb:year
+* highest number of calls for dinnertime
+* lowest for opening/closing time
+* 연도별로 시간에 따른 콜센터 Call수(count)를 분석한 결과, 도미노 피자와 미스터 피자 데이터 모두 연도별로 비슷한 경향성을 보인다는 것을 알 수 있다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1 <- ggplot(ty_data,aes(x=time,y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(ty_data2,aes(x=time,y=count,group=year,color=year)) + 
+  geom_line(aes(color=year)) +
+  geom_point() +
+  ggtitle("Mister")
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+## x:time, y:duration, gb:year
+* 연도별로 시간에 따른 평균 통화시간(duration)를 분석한 결과, 도미노 피자와 미스터 피자 데이터 모두 연도별로 비슷한 경향성을 보인다는 것을 알 수 있다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1 <- ggplot(ty_data, aes(x=time, y=duration, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(ty_data2, aes(x=time, y=duration, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  ggtitle("Mister")
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+## x:time, y:total, gb:year
+* 연도별로 시간에 따른 total를 분석한 결과, 도미노 피자와 미스터 피자 데이터 모두 연도별로 비슷한 경향성을 보인다는 것을 알 수 있다. 이는 콜센터 Call수(count)와 매우 유사한 그래프가 그려진다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1 <- ggplot(ty_data, aes(x=time, y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(ty_data2, aes(x=time, y=total, group=year, color=year)) + 
+  geom_line(aes(color=year)) + 
+  geom_point() +
+  ggtitle("Mister")
+
+grid.arrange(p1, p2, nrow=2)
+```
+
+
+# (6) TEMPERATURE
+## DATA PREPROCESSING
+* 온도에 대한 데이터 분석을 위한 데이터 전처리 과정이다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+tempClass_data = data %>%
+  group_by(tempClass) %>%
+  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
+            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+
+# Mister
+tempClass_data2 = data2 %>%
+  group_by(tempClass) %>%
+  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
+            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+```
+
+## x:tempClass, y:count
+* 도미노 피자 데이터는 추울 때 콜센터 Call수(count)가 높은 경향을 보였다. 미스터 피자 데이터는 추울 때와 더울 때 콜센터 Call수(count)가 약간 높아지는 경향을 보였다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+p1<- ggplot(tempClass_data,aes(x=tempClass,y=count),na.rm=TRUE) + ylim(0,700)+
+  geom_col()+
+  ggtitle("Domino")
+
+p2<- ggplot(tempClass_data2,aes(x=tempClass,y=count),na.rm=TRUE)+ ylim(0,700)+
+  geom_col()+
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:tempClass, y:duration
+* 도미노 피자 데이터와 미스터 피자 데이터 모두 온도에 상관없이 일정한 평균 통화시간(duration)을 보인다. 미스터 피자 데이터는 더울 때 조금 높아지는 경향이 있다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+p1<- ggplot(tempClass_data,aes(x=tempClass,y=duration),na.rm=TRUE)+  ylim(0,125)+
+  geom_col()+
+  ggtitle("Domino")
+
+# Mister
+p2<- ggplot(tempClass_data2,aes(x=tempClass,y=duration),na.rm=TRUE)+  ylim(0,125)+
+  geom_col()+
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:tempClass, y:total
+* 도미노 피자 데이터는 추울 때 total이 높은 경향을 보였다. 미스터 피자 데이터는 더울 때 total이 높아지는 경향을 보였다.
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+p1<- ggplot(tempClass_data,aes(x=tempClass,y=total),na.rm=TRUE) + ylim(0,75000)+
+  geom_col()+
+  ggtitle("Domino")
+
+# Mister
+p2<- ggplot(tempClass_data2,aes(x=tempClass,y=total),na.rm=TRUE) + ylim(0,75000)+
+  geom_col()+
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+
+# (7) PRECIPITATION
+## DATA PREPROCESSING
+* 강수량에 대한 데이터 분석을 위한 데이터 전처리 과정이다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+# Domino
+precClass_data = data %>%
+  group_by(precClass) %>%
+  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
+            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+
+# Mister
+precClass_data2 = data2 %>%
+  group_by(precClass) %>%
+  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
+            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
+            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
+```
+
+## x:precClass, y:count
+* highest in rainy days
+* lowest in clear days
+* 도미노 피자와 미스터 피자 데이터 모두 강수량이 매우 높을 경우에 콜센터 Call수(count)가 확연하게 높아졌다. 
+
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(precClass_data,aes(x=precClass,y=count),na.rm=TRUE) + 
+  geom_col() + ylim(0,1000)+
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(precClass_data2,aes(x=precClass,y=count),na.rm=TRUE) + ylim(0,1000)+
+  geom_col() + 
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:precClass, y:duration
+* 강수량에 상관 없이 평균 통화시간(duration)이 일정한 경향을 보인다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(precClass_data,aes(x=precClass,y=duration),na.rm=TRUE) + ylim(0,125)+
+  geom_col() + 
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(precClass_data2,aes(x=precClass,y=duration),na.rm=TRUE) + ylim(0,125)+
+  geom_col() + 
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+## x:precClass, y:total
+* 평균통화량(duration)이 거의 일정하므로 콜센터 Call수(count)와 비슷한 그래프가 그려진다. 
+```{r error=FALSE,message=FALSE,warning=FALSE}
+## Make a graph
+# Domino
+p1<-ggplot(precClass_data,aes(x=precClass,y=total),na.rm=TRUE) + ylim(0,120000)+
+  geom_col() + 
+  ggtitle("Domino")
+
+# Mister
+p2<-ggplot(precClass_data2,aes(x=precClass,y=total),na.rm=TRUE) + ylim(0,120000)+
+  geom_col() + 
+  ggtitle("Mister")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+
+# (8) HOLIDAY
 ## x:holiday, y:count
 * highest on one day holiday
+* 도미노 피자와 미스터 피자 데이터에서 모두 하루 쉬는 공휴일에 콜센터 Call수(count)가 눈에 띄게 높아진다. 보통 평일보다 공휴일에 콜센터 Call수(count)가 매우 높다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Data preprocessing
 # Domino
@@ -374,6 +551,7 @@ grid.arrange(p1,p2,ncol=2)
 ```
 
 ## holiday 3 days+
+* 3일 이상 연속된 공휴일에 한해 분석한 결과이다. 도미노 피자 데이터에서는 공휴일의 마지막날에 콜센터 Call수(count)가 높았고, 미스터 피자 데이터에서는 큰 차이가 없었다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Data preprocessing
 # Domino
@@ -408,9 +586,10 @@ p2<-ggplot(h2, aes(x=holiday2, y=count))+
 grid.arrange(p1,p2,ncol=2)
 ```
 
-# (7) HOLIDAY vs WEEKEND
+## HOLIDAY vs WEEKEND
 ## x:holiday, y:count
 * highest on one day holiday
+* 공휴일 중 주말인 날과 평일인 날을 더 세부적으로 분석한 결과이다. 3일 이상인 공휴일에서 주말인 경우보다 평일인 경우 더 콜센터 Call수(count)가 높게 나타난다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Data preprocessing
 # 0:weekday 1:weekend
@@ -446,8 +625,9 @@ p2<- bar + geom_bar(stat="identity", position="dodge")+ ylim(0,1000) + ggtitle("
 grid.arrange(p1,p2,ncol=2)
 ```
 
-# (8) weekend vs weekday
-*0:weekday 1:weekend
+# (9) WEEKDAY VS WEEKEND 
+* 0:weekday 1:weekend
+* 도미노 피자와 미스터 피자 데이터에서 모두 평일보다 주말의 콜센터 Call수(count)가 확연하게 높았다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 ## Data preprocessing
 # Domino
@@ -466,149 +646,19 @@ w_data2 <- data2 %>%
 
 ## Make a graph
 # Domino
-p1<-ggplot(w_data, aes(x=weekend,y=count))+geom_col()+ggtitle("Domino")+labs(y="count") + ylim(0,800)
+p1<-ggplot(w_data, aes(x=weekend,y=count, fill=weekend))+geom_col()+ggtitle("Domino")+labs(y="count") + ylim(0,800)
 
 # Mister
-p2<-ggplot(w_data2, aes(x=weekend,y=count))+geom_col()+ggtitle("Mister")+labs(y="count") + ylim(0,800)
-
-grid.arrange(p1,p2,ncol=2)
-```
-
-# (9) PRECIPITATION
-## DATA PREPROCESSING
-```{r error=FALSE,message=FALSE,warning=FALSE}
-# Domino
-precClass_data = data %>%
-  group_by(precClass) %>%
-  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
-            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-
-# Mister
-precClass_data2 = data2 %>%
-  group_by(precClass) %>%
-  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
-            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-```
-
-## x:precClass, y:count
-* highest in rainy days
-* lowest in clear days
-```{r error=FALSE,message=FALSE,warning=FALSE}
-## Make a graph
-# Domino
-p1<-ggplot(precClass_data,aes(x=precClass,y=count),na.rm=TRUE) + 
-  geom_col() + ylim(0,1000)+
-  ggtitle("Domino")
-
-# Mister
-p2<-ggplot(precClass_data2,aes(x=precClass,y=count),na.rm=TRUE) + ylim(0,1000)+
-  geom_col() + 
-  ggtitle("Mister")
-
-grid.arrange(p1,p2,ncol=2)
-```
-
-## x:precClass, y:duration
-```{r error=FALSE,message=FALSE,warning=FALSE}
-## Make a graph
-# Domino
-p1<-ggplot(precClass_data,aes(x=precClass,y=duration),na.rm=TRUE) + ylim(0,125)+
-  geom_col() + 
-  ggtitle("Domino")
-
-# Mister
-p2<-ggplot(precClass_data2,aes(x=precClass,y=duration),na.rm=TRUE) + ylim(0,125)+
-  geom_col() + 
-  ggtitle("Mister")
-
-grid.arrange(p1,p2,ncol=2)
-```
-
-## x:precClass, y:total
-```{r error=FALSE,message=FALSE,warning=FALSE}
-## Make a graph
-# Domino
-p1<-ggplot(precClass_data,aes(x=precClass,y=total),na.rm=TRUE) + ylim(0,120000)+
-  geom_col() + 
-  ggtitle("Domino")
-
-# Mister
-p2<-ggplot(precClass_data2,aes(x=precClass,y=total),na.rm=TRUE) + ylim(0,120000)+
-  geom_col() + 
-  ggtitle("Mister")
+p2<-ggplot(w_data2, aes(x=weekend,y=count, fill=weekend))+geom_col()+ggtitle("Mister")+labs(y="count") + ylim(0,800)
 
 grid.arrange(p1,p2,ncol=2)
 ```
 
 
-# (10) TEMPERATURE
-## DATA PREPROCESSING
-```{r error=FALSE,message=FALSE,warning=FALSE}
-# Domino
-tempClass_data = data %>%
-  group_by(tempClass) %>%
-  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
-            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-
-# Mister
-tempClass_data2 = data2 %>%
-  group_by(tempClass) %>%
-  summarize(count=mean(as.numeric(as.character(count)),na.rm=TRUE),
-            duration=mean(as.numeric(as.character(duration)),na.rm=TRUE),
-            total=mean(as.numeric(as.character(total)),na.rm=TRUE))
-```
-
-## x:tempClass, y:count
-* highest in cold days
-* lowest in warm days
-```{r error=FALSE,message=FALSE,warning=FALSE}
-p1<- ggplot(tempClass_data,aes(x=tempClass,y=count),na.rm=TRUE)+  ylim(0,700)+
-  geom_col()+
-  ggtitle("Domino")
-
-p2<- ggplot(tempClass_data2,aes(x=tempClass,y=count),na.rm=TRUE)+ ylim(0,700)+
-  geom_col()+
-  ggtitle("Mister")
-
-grid.arrange(p1,p2,ncol=2)
-```
-
-## x:tempClass, y:duration
-```{r error=FALSE,message=FALSE,warning=FALSE}
-# Domino
-p1<- ggplot(tempClass_data,aes(x=tempClass,y=duration),na.rm=TRUE)+  ylim(0,125)+
-  geom_col()+
-  ggtitle("Domino")
-
-# Mister
-p2<- ggplot(tempClass_data2,aes(x=tempClass,y=duration),na.rm=TRUE)+  ylim(0,125)+
-  geom_col()+
-  ggtitle("Mister")
-
-grid.arrange(p1,p2,ncol=2)
-```
-
-## x:tempClass, y:total
-```{r error=FALSE,message=FALSE,warning=FALSE}
-# Domino
-p1<- ggplot(tempClass_data,aes(x=tempClass,y=total),na.rm=TRUE)+  ylim(0,75000)+
-  geom_col()+
-  ggtitle("Domino")
-
-# Mister
-p2<- ggplot(tempClass_data2,aes(x=tempClass,y=total),na.rm=TRUE)+ylim(0,75000)+
-  geom_col()+
-  ggtitle("Mister")
-
-grid.arrange(p1,p2,ncol=2)
-```
-
-# (12) SPORTS - Sochi 2014 Winter Olympics
+# (10) SPORTS - Sochi 2014 Winter Olympics
 ## x:time, y:count, gb:sports
 * sports - 0:default, 1:minor, 2:major
+* 콜센터 Call수(count)를 시간대별로 분석한 결과, 한국팀 메달 매치 경기가 있는 경우에 가장 높았고, 그 다음으로 메달 매치가 아닌 한국팀 경기가 있는 경우가 평상시보다 높았다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Data preprocessing
 # Domino
@@ -652,8 +702,8 @@ grid.arrange(p1,p2,nrow=2)
 
 ```
 
-
 ## x:time, y:duration
+* 반면, 한국팀경기(메달매치와 비 메달매치 포함)가 있는 경우에 평상시보다 평균통화시간(duration)이 짧은 경향을 보였다. 
 ```{r error=FALSE,message=FALSE,warning=FALSE}
 # Domino
 data$sports <- as.factor(data$sports)
@@ -692,3 +742,37 @@ p2<-ggplot(sot_data2, aes(x=time, y=duration, group=sports, color=sports, linety
 
 grid.arrange(p1,p2,nrow=2)
 ```
+
+
+## (11) DUST
+```{r error=FALSE,message=FALSE,warning=FALSE}
+
+
+```
+
+
+## (12) BASEBALL
+```{r error=FALSE,message=FALSE,warning=FALSE}
+
+
+```
+
+
+## (13) MINIMUM & MAXIMUM ANALYSIS
+```{r error=FALSE,message=FALSE,warning=FALSE}
+
+
+```
+
+
+## (14) OUTLIER ANALYSIS
+```{r error=FALSE,message=FALSE,warning=FALSE}
+plot(data$duration)
+plot(data$total)
+summary(data$duration)
+
+plot(data2$duration)
+plot(data2$total)
+summary(data2$duration)
+```
+
