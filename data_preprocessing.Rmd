@@ -24,19 +24,16 @@ library(gridExtra)
 ## holiday
 * 공휴일을 나타내는 변수 
 * 0:안쉬는날 / 1:하루 쉬는날 / 2:이틀 연속 쉬는날 / 3:삼일 이상 쉬는날 / 4:민족대명절
-* naver에서 직접 공휴일 데이터 입력하여 domino4_2.csv를 생성한다.
 
 ## sports
 * 소치 올림픽 경기를 나타내는 변수 
 * 0:대한민국 경기가 아닌 것 / 1:대한민국 경기 중 매달 매치 아닌 경기 / 2:대한민국 경기중 매달 매치 경기
-* daum에서 직접 경기 데이터를 입력하여 domino4_4.csv를 생성한다.
 * 출처 : http://score.sports.media.daum.net/og/sochi/schedule/main.daum?date=20140223
 
 ## baseball 
 * 프로야구 경기를 나타내는 변수 
 * 1:시범경기 / 2:정규시즌 / 3:포스트시즌
 * 출처 : http://www.koreabaseball.com/Schedule/Schedule.aspx
-
 
 
 # Data preprocessing 
@@ -82,8 +79,6 @@ lbls<-paste(mstore$location,pct)
 lbls<-paste(lbls,"%", sep="")
 p2 = pie(slices, col=rainbow(length(slices)), labels=lbls, main="Mister Pizza Store")
 
-
-
 ```
 ## prec, temp 
 * prec은 강수량, temp는 기온을 나타내는 연속형 변수
@@ -110,15 +105,13 @@ summary_weather
 # data + summary_weather
 data = merge(data,summary_weather, by.x="date2", by.y="date", all.x=TRUE)
 
-
 ```
 
 ## precClass, tempClass
 * prec, temp 등 연속형 데이터를 범주화한 변수
 * 집중호우 기준은 30mm이지만 30mm 이상인 경우가 거의 없어 10mm이상을 S클래스로 지정한다.
 ```{r error=FALSE,message=FALSE,warning=FALSE}
-ggplot(data,aes(x=prec,y=count)) +
-  geom_point()
+ggplot(data,aes(x=prec,y=count)) + geom_point()
 
 data$precClass<-ifelse(data$prec==0,'N',ifelse(data$prec<5,'L',ifelse(data$prec<10, 'H','S')))
 data$tempClass<-ifelse(data$temp<0,'0',ifelse(data$temp<10,'1',ifelse(data$temp<20, '2',ifelse(data$temp<30,'3','4'))))
